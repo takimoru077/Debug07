@@ -12,10 +12,6 @@ jobs:
   tmate:
     runs-on: ubuntu-latest
 
-    outputs:
-      tmate_ssh: ${{ steps.get_tmate.outputs.ssh }}
-      tmate_web: ${{ steps.get_tmate.outputs.web }}
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -34,11 +30,16 @@ jobs:
           TMATE_SSH=$(tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}')
           TMATE_WEB=$(tmate -S /tmp/tmate.sock display -p '#{tmate_web}')
 
-          # Output URLs for GitHub Actions
-          echo "ssh=$TMATE_SSH" >> $GITHUB_OUTPUT
-          echo "web=$TMATE_WEB" >> $GITHUB_OUTPUT
+          echo "TMATE SSH: $TMATE_SSH"
+          echo "TMATE WEB: $TMATE_WEB"
 
-      - name: Debug log
+          # Save URLs to JSON
+          echo "{\"ssh\": \"$TMATE_SSH\", \"web\": \"$TMATE_WEB\"}" > tmate.json
+
+      - name: Commit tmate.json
         run: |
-          echo "TMATE SSH: ${{ steps.get_tmate.outputs.ssh }}"
-          echo "TMATE WEB: ${{ steps.get_tmate.outputs.web }}"
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add tmate.json
+          git commit -m "Update tmate URLs" || echo "No changes"
+          git push
