@@ -1,14 +1,44 @@
-name: debugging 
+name: Debugging
 
-on: [workflow_dispatch]
+on:
+  workflow_dispatch:
+    inputs:
+      triggered_by:
+        description: "Triggered by Telegram"
+        required: false
+        default: "bot"
 
 jobs:
-  build:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 360
+  tmate:
+    runs-on: ubuntu-latest
+
+    outputs:
+      tmate_ssh: ${{ steps.get_tmate.outputs.ssh }}
+      tmate_web: ${{ steps.get_tmate.outputs.web }}
+
     steps:
-     
-      - name: start tmate ssh
-        uses: mxschmitt/action-tmate@v3
-        
-        
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install tmate
+        run: sudo apt-get update && sudo apt-get install -y tmate
+
+      - name: Start tmate session
+        id: get_tmate
+        run: |
+          # Start tmate in detached mode
+          tmate -S /tmp/tmate.sock new-session -d
+          tmate -S /tmp/tmate.sock wait tmate-ready
+
+          # Get SSH and Web URLs
+          TMATE_SSH=$(tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}')
+          TMATE_WEB=$(tmate -S /tmp/tmate.sock display -p '#{tmate_web}')
+
+          # Output URLs for GitHub Actions
+          echo "ssh=$TMATE_SSH" >> $GITHUB_OUTPUT
+          echo "web=$TMATE_WEB" >> $GITHUB_OUTPUT
+
+      - name: Debug log
+        run: |
+          echo "TMATE SSH: ${{ steps.get_tmate.outputs.ssh }}"
+          echo "TMATE WEB: ${{ steps.get_tmate.outputs.web }}"
