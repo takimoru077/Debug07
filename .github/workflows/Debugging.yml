@@ -15,31 +15,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-
-      - name: Install tmate
-        run: sudo apt-get update && sudo apt-get install -y tmate
-
-      - name: Start tmate session
-        id: get_tmate
-        run: |
-          # Start tmate in detached mode
-          tmate -S /tmp/tmate.sock new-session -d
-          tmate -S /tmp/tmate.sock wait tmate-ready
-
-          # Get SSH and Web URLs
-          TMATE_SSH=$(tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}')
-          TMATE_WEB=$(tmate -S /tmp/tmate.sock display -p '#{tmate_web}')
-
-          echo "TMATE SSH: $TMATE_SSH"
-          echo "TMATE WEB: $TMATE_WEB"
-
-          # Save URLs to JSON
-          echo "{\"ssh\": \"$TMATE_SSH\", \"web\": \"$TMATE_WEB\"}" > tmate.json
-
-      - name: Commit tmate.json
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add tmate.json
-          git commit -m "Update tmate URLs" || echo "No changes"
-          git push
+  
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      
+      
